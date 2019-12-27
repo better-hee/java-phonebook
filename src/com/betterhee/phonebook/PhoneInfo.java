@@ -5,18 +5,11 @@ import java.util.Scanner;
 class PhoneInfo {
 	private String name;
 	private String phoneNumber;
-	private String birthday;
-
-	public PhoneInfo(String name, String phoneNumber, String birthday) {
-		this.name = name;
-		this.phoneNumber = phoneNumber;
-		this.birthday = birthday;
-	}
 
 	public PhoneInfo(String name, String phoneNumber) {
 		this.name = name;
 		this.phoneNumber = phoneNumber;
-		this.birthday = null;
+
 	}
 
 	public String getName() {
@@ -25,123 +18,157 @@ class PhoneInfo {
 
 	@Override
 	public String toString() {
-		return "PhoneInfo [name=" + name + ", phoneNumber=" + phoneNumber + ", birthday=" + birthday + "]";
+		return "PhoneInfo [name=" + name + ", phoneNumber=" + phoneNumber + "]";
 	}
 
 }
 
-class PhoneBookManager {
-	private PhoneInfo[] phoneInfoArray;
-	private Scanner sc;
-	final int MAX_CNT = 100;
-	int curCnt = 0;
+class PhoneUnivInfo extends PhoneInfo {
+	private String major;
+	private int year;
 
-	public PhoneBookManager() {
-		phoneInfoArray = new PhoneInfo[MAX_CNT];
-		sc = new Scanner(System.in);
-		showMenu();
+	public PhoneUnivInfo(String name, String phoneNumber, String major, int year) {
+		super(name, phoneNumber);
+		this.major = major;
+		this.year = year;
 	}
 
-	public void showMenu() {
-		System.out.println("선택하세요...");
-		System.out.println("1. 데이터 입력");
-		System.out.println("2. 데이터 검색");
-		System.out.println("3. 데이터 삭제");
-		System.out.println("4. 프로그램 종료");
-		choiceMenu();
+	@Override
+	public String toString() {
+		return "PhoneUnivInfo [major=" + major + ", year=" + year + ", toString()=" + super.toString() + "]";
+	}
+}
+
+class PhoneCompanyInfo extends PhoneInfo {
+	private String company;
+
+	public PhoneCompanyInfo(String name, String phoneNumber, String company) {
+		super(name, phoneNumber);
+		this.company = company;
 	}
 
-	public void choiceMenu() {
-		System.out.print("선택: ");
-		int choice = sc.nextInt();
-		sc.nextLine();
+	@Override
+	public String toString() {
+		return "PhoneCompanyInfo [company=" + company + ", toString()=" + super.toString() + "]";
+	}
+}
+
+class PhoneBookHandler {
+	private PhoneInfo[] phoneInfoList;
+	private int numOfPhoneInfo;
+	public Scanner sc = new Scanner(System.in);
+
+	public PhoneBookHandler() {
+		phoneInfoList = new PhoneInfo[100];
+		numOfPhoneInfo = 0;
+	}
+
+	public int indexOf(String name) {
+
+		for (int i = 0; i < numOfPhoneInfo; i++) {
+			if (phoneInfoList[i].getName().equals(name))
+				return i;
+		}
+
+		return -1;
+	}
+
+	public void add(int choice) {
+		System.out.print("이름: ");
+		String name = sc.nextLine();
+		System.out.print("전화: ");
+		String phoneNumber = sc.nextLine();
 
 		switch (choice) {
 		case 1:
-			addPhoneInfo();
-			showMenu();
+			phoneInfoList[numOfPhoneInfo++] = new PhoneInfo(name, phoneNumber);
 			break;
 		case 2:
-			search(sc.nextLine());
-			showMenu();
+			System.out.print("전공: ");
+			String major = sc.nextLine();
+			System.out.print("학년: ");
+			int year = sc.nextInt();
+			sc.nextLine();
+			phoneInfoList[numOfPhoneInfo++] = new PhoneUnivInfo(name, phoneNumber, major, year);
 			break;
 		case 3:
-			deletePhoneInfo(sc.nextLine());
-			showMenu();
-			break;
-		case 4:
-			System.out.println("프로그램 종료");
+			System.out.print("회사: ");
+			String company = sc.nextLine();
+			phoneInfoList[numOfPhoneInfo++] = new PhoneCompanyInfo(name, phoneNumber, company);
 			break;
 		}
-	}
 
-	public void addPhoneInfo() {
-		System.out.print("이름: ");
-		String name = sc.nextLine();
-
-		System.out.print("전화번호: ");
-		String phoneNumber = sc.nextLine();
-
-		System.out.print("생년월일: ");
-		String birthday = sc.nextLine();
-
-		// phoneInfoArray[phoneInfoArray.length] = new PhoneInfo(name, phoneNumber,
-		// birthday);
-		phoneInfoArray[curCnt++] = new PhoneInfo(name, phoneNumber, birthday);
-		System.out.println(phoneInfoArray[curCnt - 1].getName());
-		System.out.println(phoneInfoArray[curCnt - 1]);
-		System.out.println("데이터 입력이 완료되었습니다.");
-		return;
+		System.out.println("입력 완료!");
 	}
 
 	public void search(String name) {
-		System.out.println("데이터 검색을 시작합니다..");
+		int idx = indexOf(name);
 
-		// for (PhoneInfo pi : phoneInfoArray) {
-		// if (name.compareTo(pi.getName()) == 0) {
-		// System.out.println(pi);
-		// System.out.println("데이터 검색이 완료되었습니다.");
-		// return;
-		// }
-		// }
-		for (int i = 0; i < curCnt; i++) {
-			if (name.compareTo(phoneInfoArray[i].getName()) == 0) {
-				System.out.println(phoneInfoArray[i]);
-				System.out.println("데이터 검색이 완료되었습니다.");
+		if (idx == -1) {
+			System.out.println(name + "없음");
+			return;
+		}
+
+		System.out.println(phoneInfoList[idx]);
+		System.out.println("검색 완료!");
+	}
+
+	public void delete(String name) {
+		int idx = indexOf(name);
+
+		if (idx < 0) {
+			System.out.println(name + "없음");
+			return;
+		}
+
+		for (int i = idx; i < numOfPhoneInfo; i++) {
+			phoneInfoList[i] = phoneInfoList[i + 1];
+		}
+
+		phoneInfoList[--numOfPhoneInfo] = null;
+		System.out.println("삭제 완료!");
+	}
+
+}
+
+class PhoneBook {
+	public static void main(String[] args) {
+		PhoneBookHandler handler = new PhoneBookHandler();
+
+		while (true) {
+			System.out.println("*** 메뉴 선택 ***");
+			System.out.println("1. 데이터 입력");
+			System.out.println("2. 데이터 검색");
+			System.out.println("3. 데이터 삭제");
+			System.out.println("4. 프로그램 종료");
+			System.out.print("선택: ");
+
+			int choice = handler.sc.nextInt();
+			handler.sc.nextLine();
+
+			switch (choice) {
+			case 1:
+				System.out.println("1. 일반, 2. 대학, 3.회사");
+				System.out.print("선택>> ");
+				int type = handler.sc.nextInt();
+				handler.sc.nextLine();
+				handler.add(type);
+				break;
+			case 2:
+				System.out.print("이름: ");
+				handler.search(handler.sc.nextLine());
+				break;
+
+			case 3:
+				System.out.print("이름: ");
+				handler.delete(handler.sc.nextLine());
+				break;
+
+			case 4:
+				System.out.println("프로그램을 종료합니다..");
+				handler.sc.close();
 				return;
 			}
 		}
-		System.out.println("검색한 데이터가 없습니다.");
-		return;
-	}
-
-	public void deletePhoneInfo(String name) {
-		System.out.println("데이터 삭제를 시작합니다..");
-
-		// for (int i = 0; i < phoneInfoArray.length; i++) {
-		// if (phoneInfoArray[i].getName() == name) {
-		// while (i < phoneInfoArray.length - 1) {
-		// phoneInfoArray[i] = phoneInfoArray[++i];
-		// phoneInfoArray[phoneInfoArray.length-1] = null;
-		// break;
-		// }
-		// }
-		// }
-		for (int i = 0; i < curCnt; i++) {
-			if (name.compareTo(phoneInfoArray[i].getName()) == 0) {
-				while (i < curCnt) {
-					phoneInfoArray[i] = phoneInfoArray[++i];
-					curCnt--;
-					System.out.println("데이터 삭제가 완료되었습니다.");
-					return;
-				}
-			}
-		}
-
-		System.out.println("삭제할 데이터가 없습니다.");
-	}
-
-	public static void main(String[] args) {
-		PhoneBookManager pbm = new PhoneBookManager();
 	}
 }

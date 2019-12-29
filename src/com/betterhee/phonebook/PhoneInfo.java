@@ -2,6 +2,14 @@ package com.betterhee.phonebook;
 
 import java.util.Scanner;
 
+interface MENU {
+	int ADD = 1, SEARCH = 2, DELETE = 3, EXIT = 4;
+}
+
+interface RELATION {
+	int COMMON = 1, UNIVERSITY = 2, COMPANY = 3;
+}
+
 class PhoneInfo {
 	private String name;
 	private String phoneNumber;
@@ -54,13 +62,20 @@ class PhoneCompanyInfo extends PhoneInfo {
 }
 
 class PhoneBookHandler {
+	private static PhoneBookHandler instance = null;
 	private PhoneInfo[] phoneInfoList;
 	private int numOfPhoneInfo;
 	public Scanner sc = new Scanner(System.in);
 
-	public PhoneBookHandler() {
+	private PhoneBookHandler() {
 		phoneInfoList = new PhoneInfo[100];
 		numOfPhoneInfo = 0;
+	}
+
+	public static PhoneBookHandler getInstance() {
+		if (instance == null)
+			instance = new PhoneBookHandler();
+		return instance;
 	}
 
 	public int indexOf(String name) {
@@ -73,17 +88,18 @@ class PhoneBookHandler {
 		return -1;
 	}
 
-	public void add(int choice) {
+	public void add(int choice) throws MenuChoiceException {
+
 		System.out.print("이름: ");
 		String name = sc.nextLine();
 		System.out.print("전화: ");
 		String phoneNumber = sc.nextLine();
 
 		switch (choice) {
-		case 1:
+		case RELATION.COMMON:
 			phoneInfoList[numOfPhoneInfo++] = new PhoneInfo(name, phoneNumber);
 			break;
-		case 2:
+		case RELATION.UNIVERSITY:
 			System.out.print("전공: ");
 			String major = sc.nextLine();
 			System.out.print("학년: ");
@@ -91,11 +107,13 @@ class PhoneBookHandler {
 			sc.nextLine();
 			phoneInfoList[numOfPhoneInfo++] = new PhoneUnivInfo(name, phoneNumber, major, year);
 			break;
-		case 3:
+		case RELATION.COMPANY:
 			System.out.print("회사: ");
 			String company = sc.nextLine();
 			phoneInfoList[numOfPhoneInfo++] = new PhoneCompanyInfo(name, phoneNumber, company);
 			break;
+		default:
+			throw new MenuChoiceException(choice);
 		}
 
 		System.out.println("입력 완료!");
@@ -131,9 +149,16 @@ class PhoneBookHandler {
 
 }
 
+class MenuChoiceException extends Exception {
+
+	public MenuChoiceException(Object choice) {
+		super("잘못된 메뉴 선택: " + choice.toString());
+	}
+}
+
 class PhoneBook {
 	public static void main(String[] args) {
-		PhoneBookHandler handler = new PhoneBookHandler();
+		PhoneBookHandler handler = PhoneBookHandler.getInstance();
 
 		while (true) {
 			System.out.println("*** 메뉴 선택 ***");
@@ -146,28 +171,37 @@ class PhoneBook {
 			int choice = handler.sc.nextInt();
 			handler.sc.nextLine();
 
-			switch (choice) {
-			case 1:
-				System.out.println("1. 일반, 2. 대학, 3.회사");
-				System.out.print("선택>> ");
-				int type = handler.sc.nextInt();
-				handler.sc.nextLine();
-				handler.add(type);
-				break;
-			case 2:
-				System.out.print("이름: ");
-				handler.search(handler.sc.nextLine());
-				break;
+			try {
+				switch (choice) {
+				case MENU.ADD:
+					System.out.println("1. 일반, 2. 대학, 3.회사");
+					System.out.print("선택>> ");
+					int type = handler.sc.nextInt();
+					handler.sc.nextLine();
+					handler.add(type);
+					break;
 
-			case 3:
-				System.out.print("이름: ");
-				handler.delete(handler.sc.nextLine());
-				break;
+				case MENU.SEARCH:
+					System.out.print("이름: ");
+					handler.search(handler.sc.nextLine());
+					break;
 
-			case 4:
-				System.out.println("프로그램을 종료합니다..");
-				handler.sc.close();
-				return;
+				case MENU.DELETE:
+					System.out.print("이름: ");
+					handler.delete(handler.sc.nextLine());
+					break;
+
+				case MENU.EXIT:
+					System.out.println("프로그램을 종료합니다..");
+					handler.sc.close();
+					return;
+
+				default:
+					throw new MenuChoiceException(choice);
+				}
+			} catch (Exception e) {
+				System.out.println(e.getMessage());
+				continue;
 			}
 		}
 	}

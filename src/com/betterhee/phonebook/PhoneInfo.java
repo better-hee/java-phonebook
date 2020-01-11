@@ -1,6 +1,8 @@
 package com.betterhee.phonebook;
 
 import java.util.Scanner;
+import java.util.Iterator;
+import java.util.HashSet;
 
 interface MENU {
 	int ADD = 1, SEARCH = 2, DELETE = 3, EXIT = 4;
@@ -27,6 +29,19 @@ class PhoneInfo {
 	@Override
 	public String toString() {
 		return "PhoneInfo [name=" + name + ", phoneNumber=" + phoneNumber + "]";
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (!(o instanceof PhoneInfo))
+			return false;
+		PhoneInfo p = (PhoneInfo) o;
+		return name.equals(p.name);
+	}
+
+	@Override
+	public int hashCode() {
+		return name.hashCode();
 	}
 
 }
@@ -62,30 +77,18 @@ class PhoneCompanyInfo extends PhoneInfo {
 }
 
 class PhoneBookHandler {
-	private static PhoneBookHandler instance = null;
-	private PhoneInfo[] phoneInfoList;
-	private int numOfPhoneInfo;
 	public Scanner sc = new Scanner(System.in);
+	private static PhoneBookHandler instance = null;
+	private HashSet<PhoneInfo> phoneInfoList = null;
 
 	private PhoneBookHandler() {
-		phoneInfoList = new PhoneInfo[100];
-		numOfPhoneInfo = 0;
+		phoneInfoList = new HashSet<PhoneInfo>();
 	}
 
 	public static PhoneBookHandler getInstance() {
 		if (instance == null)
 			instance = new PhoneBookHandler();
 		return instance;
-	}
-
-	public int indexOf(String name) {
-
-		for (int i = 0; i < numOfPhoneInfo; i++) {
-			if (phoneInfoList[i].getName().equals(name))
-				return i;
-		}
-
-		return -1;
 	}
 
 	public void add(int choice) throws MenuChoiceException {
@@ -96,61 +99,64 @@ class PhoneBookHandler {
 		String phoneNumber = sc.nextLine();
 
 		switch (choice) {
+
 		case RELATION.COMMON:
-			phoneInfoList[numOfPhoneInfo++] = new PhoneInfo(name, phoneNumber);
+			System.out.println(phoneInfoList.add(new PhoneInfo(name, phoneNumber)));
 			break;
+
 		case RELATION.UNIVERSITY:
 			System.out.print("전공: ");
 			String major = sc.nextLine();
 			System.out.print("학년: ");
 			int year = sc.nextInt();
 			sc.nextLine();
-			phoneInfoList[numOfPhoneInfo++] = new PhoneUnivInfo(name, phoneNumber, major, year);
+			System.out.println(phoneInfoList.add(new PhoneUnivInfo(name, phoneNumber, major, year)));
 			break;
+
 		case RELATION.COMPANY:
 			System.out.print("회사: ");
 			String company = sc.nextLine();
-			phoneInfoList[numOfPhoneInfo++] = new PhoneCompanyInfo(name, phoneNumber, company);
+			System.out.println(phoneInfoList.add(new PhoneCompanyInfo(name, phoneNumber, company)));
 			break;
+
 		default:
 			throw new MenuChoiceException(choice);
 		}
 
-		System.out.println("입력 완료!");
 	}
 
-	public void search(String name) {
-		int idx = indexOf(name);
+	public boolean search(String name) {
+		Iterator<PhoneInfo> itr = phoneInfoList.iterator();
 
-		if (idx == -1) {
-			System.out.println(name + "없음");
-			return;
+		while (itr.hasNext()) {
+			PhoneInfo cur = itr.next();
+			if (cur.getName().equals(name)) {
+				System.out.println(cur.toString());
+				return true;
+			}
 		}
-
-		System.out.println(phoneInfoList[idx]);
-		System.out.println("검색 완료!");
+		System.out.println("해당 데이터 없음");
+		return false;
 	}
 
-	public void delete(String name) {
-		int idx = indexOf(name);
+	public boolean delete(String name) {
+		Iterator<PhoneInfo> itr = phoneInfoList.iterator();
 
-		if (idx < 0) {
-			System.out.println(name + "없음");
-			return;
+		// 핵심필드 name이니까 name과 같은 해시코드 가지는 값만 얻어서 삭제하면 되는건
+		while (itr.hasNext()) {
+			PhoneInfo cur = itr.next();
+			if (cur.getName().equals(name)) {
+				System.out.println(name + "삭제 완료!");
+				itr.remove();
+				return true;
+			}
 		}
-
-		for (int i = idx; i < numOfPhoneInfo; i++) {
-			phoneInfoList[i] = phoneInfoList[i + 1];
-		}
-
-		phoneInfoList[--numOfPhoneInfo] = null;
-		System.out.println("삭제 완료!");
+		System.out.println("해당 데이터 없음");
+		return false;
 	}
-
 }
 
 class MenuChoiceException extends Exception {
-
 	public MenuChoiceException(Object choice) {
 		super("잘못된 메뉴 선택: " + choice.toString());
 	}
